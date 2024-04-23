@@ -2,23 +2,26 @@
 
 namespace App\Controller;
 
+use App\Entity\Series;
+use App\Repository\SeriesRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 class SeriesController extends AbstractController
 {
+    public function __construct(
+        private SeriesRepository $seriesRepository,
+    ) {
+    }
+
     // public function index(Request $request): Response
     #[Route('/series', name: 'app_series', methods: ['GET'])]
-    public function seriesList(Request $request): Response
+    public function seriesList(): Response
     {
-        $seriesList = [
-            'Lost',
-            'Grey\'s Anatomy',
-            'Loki',
-            'Suits',
-        ];
+        $seriesList = $this->seriesRepository->findAll();
 
         return $this->render('series/index.html.twig', [
             'seriesList' => $seriesList
@@ -29,5 +32,14 @@ class SeriesController extends AbstractController
     public function addSeriesForm(): Response
     {
         return $this->render('series/form.html.twig');
+    }
+
+    #[Route('/series/create', methods: ['POST'])]
+    public function addSeries(Request $request): Response
+    {
+        $seriesName = $request->request->get(key: 'name');
+        $series = new Series($seriesName);
+        $this->seriesRepository->add($series, flush: true);
+        return new RedirectResponse(url: '/series');
     }
 }
